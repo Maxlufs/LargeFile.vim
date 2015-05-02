@@ -1,7 +1,7 @@
 " LargeFile: Sets up an autocmd to make editing large files work with celerity
 "   Author:		Charles E. Campbell
-"   Date:		Jan 08, 2015
-"   Version:	7b	ASTRO-ONLY
+"   Date:		Apr 10, 2015
+"   Version:	7c	ASTRO-ONLY
 "   Copyright:	see :help LargeFile-copyright
 " GetLatestVimScripts: 1506 1 :AutoInstall: LargeFile.vim
 "DechoRemOn
@@ -11,7 +11,7 @@
 if exists("g:loaded_LargeFile") || &cp
  finish
 endif
-let g:loaded_LargeFile = "v7b"
+let g:loaded_LargeFile = "v7c"
 let s:keepcpo          = &cpo
 set cpo&vim
 
@@ -73,7 +73,7 @@ fun! s:LargeFile(force,fname)
      au BufLeave	<buffer>	call s:LargeFileLeave()
 	endif
 	au WinEnter		*			call s:LargeFileWinEnter()
-    au BufUnload	<buffer>	augroup LargeFileAU|au! * <buffer>|augroup END
+    au BufUnload	<buffer>	augroup LargeFileAU|exe 'au! * <buffer>'|augroup END
    augroup END
    let b:LargeFile_mode = 1
 "   call Decho("turning  b:LargeFile_mode to ".b:LargeFile_mode)
@@ -104,8 +104,14 @@ fun! s:ParenMatchOff()
     com NoMatchParen
    redir END
    if matchparen_enabled =~ 'g:loaded_matchparen'
-	let b:LF_nmpkeep= 1
-	NoMatchParen
+	" NoMatchParen uses "windo"; thus it can cause an "E201: *ReadPre autocommands
+	" must not change current buffer".  (dhahler@gmail.com)
+	let b:LF_nmpkeep = 1
+	let curaltwin    = winnr('#')? winnr("#") : 1
+	let curwin       = winnr()
+	sil! NoMatchParen
+	exe curaltwin."wincmd w"
+	exe curwin."wincmd w"
    endif
 "  call Dret("s:ParenMatchOff")
 endfun
